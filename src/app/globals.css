@@ -1,0 +1,134 @@
+@import "tailwindcss";
+
+@variant dark (&:where(.dark, .dark *));
+
+@layer base {
+  :root {
+    --bg-primary: #ffffff;
+    --bg-card: #f8fafc;
+    --bg-surface: #f1f5f9;
+    --text-primary: #0f172a;
+    --text-secondary: #64748b;
+    --brand-primary: #003262;
+    --brand-accent: #16a0ac;
+  }
+
+  .dark {
+    --bg-primary: #0f0f1a;
+    --bg-card: #1a1a2e;
+    --bg-surface: #252540;
+    --text-primary: #f1f5f9;
+    --text-secondary: #94a3b8;
+  }
+}
+
+@theme inline {
+  --color-brand-primary: var(--brand-primary);
+  --color-brand-accent: var(--brand-accent);
+  --color-surface-primary: var(--bg-primary);
+  --color-surface-card: var(--bg-card);
+  --color-surface-elevated: var(--bg-surface);
+}
+
+body {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  transition: background-color 0.2s, color 0.2s;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+/* React DatePicker dark mode styles */
+.dark .react-datepicker {
+  background-color: var(--bg-card);
+  border-color: var(--bg-surface);
+  color: var(--text-primary);
+  font-family: inherit;
+}
+
+.dark .react-datepicker__header {
+  background-color: var(--bg-surface);
+  border-bottom-color: var(--bg-surface);
+}
+
+.dark .react-datepicker__current-month,
+.dark .react-datepicker__day-name,
+.dark .react-datepicker-time__header {
+  color: var(--text-primary);
+}
+
+.dark .react-datepicker__day {
+  color: var(--text-primary);
+}
+
+.dark .react-datepicker__day:hover {
+  background-color: var(--bg-surface);
+}
+
+.dark .react-datepicker__day--selected,
+.dark .react-datepicker__day--keyboard-selected {
+  background-color: var(--brand-accent) !important;
+  color: white !important;
+}
+
+.dark .react-datepicker__day--today {
+  font-weight: bold;
+}
+
+.dark .react-datepicker__time-container {
+  border-left-color: var(--bg-surface);
+}
+
+.dark .react-datepicker__time-container .react-datepicker__time {
+  background-color: var(--bg-card) !important;
+}
+
+.dark .react-datepicker__time-container .react-datepicker__time .react-datepicker__time-box {
+  background-color: var(--bg-card) !important;
+}
+
+.dark .react-datepicker__time-container .react-datepicker__time .react-datepicker__time-box ul.react-datepicker__time-list {
+  background-color: var(--bg-card) !important;
+}
+
+.dark .react-datepicker__time-container .react-datepicker__time .react-datepicker__time-box ul.react-datepicker__time-list li.react-datepicker__time-list-item {
+  color: var(--text-primary) !important;
+  background-color: var(--bg-card) !important;
+}
+
+.dark .react-datepicker__time-container .react-datepicker__time .react-datepicker__time-box ul.react-datepicker__time-list li.react-datepicker__time-list-item:hover {
+  background-color: var(--bg-surface) !important;
+}
+
+.dark .react-datepicker__time-container .react-datepicker__time .react-datepicker__time-box ul.react-datepicker__time-list li.react-datepicker__time-list-item--selected {
+  background-color: var(--brand-accent) !important;
+  color: white !important;
+}
+
+.dark .react-datepicker__navigation-icon::before {
+  border-color: var(--text-secondary);
+}
+
+.dark .react-datepicker__month-dropdown,
+.dark .react-datepicker__year-dropdown {
+  background-color: var(--bg-card);
+  border-color: var(--bg-surface);
+}
+
+/* Light mode overrides for consistency */
+.react-datepicker {
+  font-family: inherit;
+  border-color: var(--bg-surface);
+}
+
+.react-datepicker__day--selected,
+.react-datepicker__day--keyboard-selected {
+  background-color: var(--brand-accent) !important;
+}
+
+.react-datepicker__time-list-item--selected {
+  background-color: var(--brand-accent) !important;
+}
+
+.react-datepicker-popper {
+  z-index: 30 !important;
+}

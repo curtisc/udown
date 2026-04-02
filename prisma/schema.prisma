@@ -1,0 +1,370 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ============================================================
+// Auth.js adapter models
+// ============================================================
+
+model User {
+  id                 String    @id @default(cuid())
+  name               String?
+  email              String    @unique
+  emailVerified      DateTime?
+  image              String?
+  phone              String?
+  emailNotifications Boolean   @default(true)
+  smsNotifications   Boolean   @default(false)
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  accounts               Account[]
+  sessions               Session[]
+  ownedGroups            Group[]                @relation("GroupOwner")
+  groupMemberships       GroupMember[]
+  createdEvents          Event[]                @relation("EventCreator")
+  createdEventSeries     EventSeries[]          @relation("SeriesCreator")
+  rsvps                  RSVP[]
+  notificationPrefs      NotificationPreference[]
+  whitelistEntriesAdded  EmailWhitelist[]       @relation("WhitelistAddedBy")
+  accessRequestResponses AccessRequest[]        @relation("AccessRequestResponder")
+  activityLogs           ActivityLog[]
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// ============================================================
+// Access control
+// ============================================================
+
+model EmailWhitelist {
+  id        String             @id @default(cuid())
+  email     String
+  type      EmailWhitelistType
+  addedById String?
+  createdAt DateTime           @default(now())
+
+  addedBy User? @relation("WhitelistAddedBy", fields: [addedById], references: [id])
+
+  @@unique([email, type])
+}
+
+enum EmailWhitelistType {
+  EMAIL
+  DOMAIN
+}
+
+model AccessRequest {
+  id            String              @id @default(cuid())
+  name          String
+  email         String
+  image         String?
+  status        AccessRequestStatus @default(PENDING)
+  respondedById String?
+  respondedAt   DateTime?
+  createdAt     DateTime            @default(now())
+
+  respondedBy User? @relation("AccessRequestResponder", fields: [respondedById], references: [id])
+
+  @@index([status, email])         // Auth: find pending request by email on sign-in
+  @@index([status])               // Admin: pending requests list
+}
+
+enum AccessRequestStatus {
+  PENDING
+  APPROVED
+  DENIED
+}
+
+// ============================================================
+// Groups & membership
+// ============================================================
+
+model Group {
+  id                      String    @id @default(cuid())
+  name                    String
+  description             String?
+  image                   String?
+  isDefault               Boolean   @default(false)
+  ownerId                 String
+  lastEventAt             DateTime?
+  lastNudgeSentAt         DateTime?
+  inactivityThresholdDays Int       @default(30)
+  createdAt               DateTime  @default(now())
+  updatedAt               DateTime  @updatedAt
+
+  owner             User                   @relation("GroupOwner", fields: [ownerId], references: [id])
+  members           GroupMember[]
+  events            Event[]
+  eventSeries       EventSeries[]
+  notificationPrefs NotificationPreference[]
+
+  @@index([isDefault])             // Default group lookup (auth, permissions, cron)
+  @@index([isDefault, name])       // Groups listing sorted by default first, then name
+}
+
+model GroupMember {
+  id       String         @id @default(cuid())
+  userId   String
+  groupId  String
+  role     GroupMemberRole @default(MEMBER)
+  joinedAt DateTime       @default(now())
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  group Group @relation(fields: [groupId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, groupId])
+  @@index([userId])               // All groups for a user (feed, event form, settings)
+  @@index([groupId])              // All members of a group (group detail, notifications)
+}
+
+enum GroupMemberRole {
+  MEMBER
+  ADMIN
+}
+
+// ============================================================
+// Events & RSVPs
+// ============================================================
+
+model Event {
+  id             String    @id @default(cuid())
+  title          String
+  description    String?
+  dateTime       DateTime
+  endTime        DateTime?
+  placeName      String?
+  placeAddress   String?
+  placeLat       Float?
+  placeLng       Float?
+  placeId        String?
+  estimatedCost  Decimal?
+  capacity       Int?
+  groupId        String
+  createdById    String
+  seriesId       String?
+  isModified     Boolean   @default(false)
+  reminderSentAt DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  group     Group        @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  createdBy User         @relation("EventCreator", fields: [createdById], references: [id])
+  series    EventSeries? @relation(fields: [seriesId], references: [id], onDelete: SetNull)
+  rsvps     RSVP[]
+  tags      EventTag[]
+
+  @@index([groupId, dateTime])    // Feed + group detail: events by group sorted by date
+  @@index([dateTime])             // Feed: upcoming events across groups
+  @@index([seriesId])             // Series instance generation + bulk updates
+  @@index([reminderSentAt, dateTime]) // Cron: find events needing reminders in time window
+  @@index([createdById])          // User's created events
+}
+
+model EventSeries {
+  id              String     @id @default(cuid())
+  groupId         String
+  createdById     String
+  recurrence      Recurrence
+  dayOfWeek       Int
+  weekOfMonth     Int?            // For MONTHLY: which occurrence (1=first, 2=second, etc.)
+  timeOfDay       String
+  durationMinutes Int?
+  title           String
+  description     String?
+  placeName       String?
+  placeAddress    String?
+  placeLat        Float?
+  placeLng        Float?
+  placeId         String?
+  estimatedCost   Decimal?
+  capacity        Int?
+  tagIds          String[]
+  startsAt        DateTime
+  endsAt          DateTime?
+  skippedDates    DateTime[]
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+
+  group     Group   @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  createdBy User    @relation("SeriesCreator", fields: [createdById], references: [id])
+  events    Event[]
+
+  @@index([groupId])              // Series by group
+  @@index([endsAt])               // Cron: find active series
+}
+
+enum Recurrence {
+  WEEKLY
+  BIWEEKLY
+  MONTHLY
+}
+
+model RSVP {
+  id         String     @id @default(cuid())
+  userId     String
+  eventId    String
+  status     RSVPStatus
+  guestCount Int        @default(0)
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, eventId])
+  @@index([eventId, status])      // Notifications: find DOWN/MAYBE RSVPs for an event
+}
+
+enum RSVPStatus {
+  DOWN
+  MAYBE
+  NOT_DOWN
+}
+
+// ============================================================
+// Tags
+// ============================================================
+
+model Tag {
+  id   String @id @default(cuid())
+  name String @unique
+  slug String @unique
+
+  events EventTag[]
+}
+
+model EventTag {
+  eventId String
+  tagId   String
+
+  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  tag   Tag   @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([eventId, tagId])
+}
+
+// ============================================================
+// Notifications
+// ============================================================
+
+model NotificationPreference {
+  id             String              @id @default(cuid())
+  userId         String
+  groupId        String
+  newEvents      Boolean             @default(true)
+  eventUpdates   Boolean             @default(true)
+  eventReminders Boolean             @default(true)
+  rsvpMilestones Boolean             @default(true)
+  channel        NotificationChannel @default(EMAIL)
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  group Group @relation(fields: [groupId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, groupId])
+}
+
+enum NotificationChannel {
+  EMAIL
+  SMS
+  BOTH
+  OFF
+}
+
+// ============================================================
+// Org settings (singleton)
+// ============================================================
+
+model OrgSettings {
+  id                        String   @id @default(cuid())
+  orgName                   String
+  orgLogo                   String?
+  primaryColor              String   @default("#003262")
+  accentColor               String   @default("#16a0ac")
+  fromEmail                 String?
+  fromName                  String?
+  defaultEmailNotifications Boolean  @default(true)
+  defaultSmsNotifications   Boolean  @default(false)
+  updatedAt                 DateTime @updatedAt
+}
+
+// ============================================================
+// Activity log
+// ============================================================
+
+model ActivityLog {
+  id         String         @id @default(cuid())
+  actorId    String
+  action     ActivityAction
+  targetType ActivityTarget
+  targetId   String
+  metadata   Json
+  createdAt  DateTime       @default(now())
+
+  actor User @relation(fields: [actorId], references: [id])
+
+  @@index([createdAt])            // Admin activity feed: reverse chronological
+  @@index([actorId])              // Activity by user
+}
+
+enum ActivityAction {
+  USER_JOINED
+  EVENT_CREATED
+  EVENT_UPDATED
+  EVENT_DELETED
+  RSVP_CREATED
+  RSVP_UPDATED
+  GROUP_CREATED
+  GROUP_JOINED
+  GROUP_LEFT
+  MEMBER_REMOVED
+  ACCESS_REQUESTED
+  ACCESS_APPROVED
+  ACCESS_DENIED
+  SETTINGS_UPDATED
+}
+
+enum ActivityTarget {
+  USER
+  EVENT
+  GROUP
+  SETTINGS
+}
