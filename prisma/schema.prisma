@@ -19,6 +19,7 @@ model User {
   phone              String?
   emailNotifications Boolean   @default(true)
   smsNotifications   Boolean   @default(false)
+  lastVisitedAt      DateTime?
   createdAt          DateTime  @default(now())
   updatedAt          DateTime  @updatedAt
 

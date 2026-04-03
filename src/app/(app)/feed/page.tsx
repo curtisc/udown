@@ -2,6 +2,7 @@ import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { redirect } from 'next/navigation'
 import { EventCard } from '@/components/events/event-card'
+import { WhatsNewBanner } from '@/components/events/whats-new-banner'
 import Link from 'next/link'
 
 type Props = {
@@ -15,7 +16,15 @@ export default async function FeedPage({ searchParams }: Props) {
   const { tag } = await searchParams
   const now = new Date()
 
-  const [allTags, upcomingEvents] = await Promise.all([
+  // Get user's lastVisitedAt for "what's new" banner
+  const user = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: { lastVisitedAt: true },
+  })
+  const lastVisited = user?.lastVisitedAt
+
+  // Fetch everything in parallel
+  const [allTags, upcomingEvents, newGroups, newEvents] = await Promise.all([
     prisma.tag.findMany({ orderBy: { name: 'asc' } }),
     prisma.event.findMany({
       where: {
@@ -34,10 +43,48 @@ export default async function FeedPage({ searchParams }: Props) {
       },
       orderBy: { dateTime: 'asc' },
     }),
+    // New groups since last visit (that user hasn't joined)
+    lastVisited
+      ? prisma.group.findMany({
+          where: {
+            createdAt: { gt: lastVisited },
+            isDefault: false,
+            members: { none: { userId: session.user.id } },
+          },
+          include: { _count: { select: { members: true } } },
+          orderBy: { createdAt: 'desc' },
+          take: 5,
+        })
+      : Promise.resolve([]),
+    // New events since last visit (in user's groups)
+    lastVisited
+      ? prisma.event.findMany({
+          where: {
+            createdAt: { gt: lastVisited },
+            dateTime: { gte: now },
+            group: {
+              members: { some: { userId: session.user.id } },
+            },
+          },
+          include: {
+            group: { select: { name: true } },
+          },
+          orderBy: { createdAt: 'desc' },
+          take: 10,
+        })
+      : Promise.resolve([]),
   ])
+
+  // Update lastVisitedAt (fire-and-forget, don't block render)
+  void prisma.user.update({
+    where: { id: session.user.id },
+    data: { lastVisitedAt: now },
+  }).catch(console.error)
 
   return (
     <div>
+      <WhatsNewBanner newGroups={newGroups} newEvents={newEvents} />
+
       <div className="mb-6 flex items-center justify-between">
         <h2 className="text-lg font-bold text-[var(--text-primary)]">Upcoming</h2>
         <Link
