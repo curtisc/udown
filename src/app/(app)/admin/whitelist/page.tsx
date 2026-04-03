@@ -1,6 +1,7 @@
 import { prisma } from '@/lib/prisma'
 import { addWhitelistEntry, removeWhitelistEntry } from '@/lib/actions/admin'
 import { RemoveButton } from './remove-button'
+import { SubmitButton } from '@/components/ui/submit-button'
 
 export default async function WhitelistPage() {
   const entries = await prisma.emailWhitelist.findMany({
@@ -25,12 +26,12 @@ export default async function WhitelistPage() {
           placeholder="alice@example.com, bob@example.com, stanford.edu"
           className="mt-2 w-full rounded-lg border border-[var(--bg-surface)] bg-[var(--bg-primary)] px-3 py-2 text-[var(--text-primary)] placeholder-[var(--text-secondary)] text-sm focus:border-[var(--brand-accent)] focus:outline-none focus:ring-1 focus:ring-[var(--brand-accent)]"
         />
-        <button
-          type="submit"
+        <SubmitButton
           className="mt-2 rounded-lg bg-[var(--brand-accent)] px-4 py-2 text-sm font-semibold text-white transition-opacity hover:opacity-90"
+          pendingText="Adding..."
         >
           Add to Whitelist
-        </button>
+        </SubmitButton>
       </form>
 
       <div className="space-y-2">

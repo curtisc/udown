@@ -1,5 +1,6 @@
 import { getOrgSettings } from '@/lib/org-settings'
 import { updateOrgSettings } from '@/lib/actions/admin'
+import { SubmitButton } from '@/components/ui/submit-button'
 
 export default async function OrgSettingsPage() {
   const org = await getOrgSettings()
@@ -108,12 +109,12 @@ export default async function OrgSettingsPage() {
         </div>
       </div>
 
-      <button
-        type="submit"
+      <SubmitButton
         className="rounded-lg bg-[var(--brand-accent)] px-6 py-2 text-sm font-semibold text-white transition-opacity hover:opacity-90"
+        pendingText="Saving..."
       >
         Save Settings
-      </button>
+      </SubmitButton>
     </form>
   )
 }

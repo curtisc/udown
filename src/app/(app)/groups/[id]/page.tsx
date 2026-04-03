@@ -6,6 +6,7 @@ import { EventCard } from '@/components/events/event-card'
 import { MemberList } from '@/components/groups/member-list'
 import { joinGroup, leaveGroup } from '@/lib/actions/groups'
 import { isGroupAdmin } from '@/lib/permissions'
+import { SubmitButton } from '@/components/ui/submit-button'
 
 type Props = {
   params: Promise<{ id: string }>
@@ -79,22 +80,22 @@ export default async function GroupDetailPage({ params }: Props) {
         <div className="flex gap-2">
           {!isMember && (
             <form action={async () => { 'use server'; await joinGroup(id) }}>
-              <button
-                type="submit"
+              <SubmitButton
                 className="rounded-lg bg-[var(--brand-accent)] px-4 py-2 text-sm font-semibold text-white transition-opacity hover:opacity-90"
+                pendingText="Joining..."
               >
                 Join
-              </button>
+              </SubmitButton>
             </form>
           )}
           {isMember && !group.isDefault && group.ownerId !== session.user.id && (
             <form action={async () => { 'use server'; await leaveGroup(id) }}>
-              <button
-                type="submit"
+              <SubmitButton
                 className="rounded-lg bg-[var(--bg-surface)] px-4 py-2 text-sm font-medium text-[var(--text-secondary)] transition-colors hover:text-[var(--text-primary)]"
+                pendingText="Leaving..."
               >
                 Leave
-              </button>
+              </SubmitButton>
             </form>
           )}
           {adminStatus && !group.isDefault && (

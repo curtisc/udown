@@ -1,5 +1,6 @@
 import { createGroup } from '@/lib/actions/groups'
 import Link from 'next/link'
+import { SubmitButton } from '@/components/ui/submit-button'
 
 export default function NewGroupPage() {
   return (
@@ -40,12 +41,12 @@ export default function NewGroupPage() {
             className="mt-1 w-full rounded-lg border border-[var(--bg-surface)] bg-[var(--bg-card)] px-3 py-2 text-[var(--text-primary)] placeholder-[var(--text-secondary)] focus:border-[var(--brand-accent)] focus:outline-none focus:ring-1 focus:ring-[var(--brand-accent)]"
           />
         </div>
-        <button
-          type="submit"
+        <SubmitButton
           className="w-full rounded-lg bg-[var(--brand-accent)] px-4 py-3 font-semibold text-white transition-opacity hover:opacity-90"
+          pendingText="Creating..."
         >
           Create Group
-        </button>
+        </SubmitButton>
       </form>
     </div>
   )

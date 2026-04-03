@@ -1,6 +1,7 @@
 import { signIn } from '@/lib/auth'
 import { getOrgSettings } from '@/lib/org-settings'
 import { getEnabledProviderIds } from '@/lib/auth-providers'
+import { SubmitButton } from '@/components/ui/submit-button'
 
 const providerMeta: Record<string, { name: string; bg: string; text: string }> =
   {
@@ -44,13 +45,13 @@ export default async function SignInPage() {
                   await signIn(id, { redirectTo: '/feed' })
                 }}
               >
-                <button
-                  type="submit"
+                <SubmitButton
                   className="flex w-full items-center justify-center rounded-lg px-4 py-3 font-semibold transition-opacity hover:opacity-90"
+                  pendingText="Signing in..."
                   style={{ backgroundColor: meta.bg, color: meta.text }}
                 >
                   Sign in with {meta.name}
-                </button>
+                </SubmitButton>
               </form>
             )
           })}

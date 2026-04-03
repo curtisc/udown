@@ -4,6 +4,7 @@ import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
 import { updateGroup, deleteGroup } from '@/lib/actions/groups'
 import { isGroupAdmin } from '@/lib/permissions'
+import { SubmitButton } from '@/components/ui/submit-button'
 
 type Props = {
   params: Promise<{ id: string }>
@@ -62,12 +63,12 @@ export default async function GroupSettingsPage({ params }: Props) {
             className="mt-1 w-full rounded-lg border border-[var(--bg-surface)] bg-[var(--bg-primary)] px-3 py-2 text-[var(--text-primary)] focus:border-[var(--brand-accent)] focus:outline-none focus:ring-1 focus:ring-[var(--brand-accent)]"
           />
         </div>
-        <button
-          type="submit"
+        <SubmitButton
           className="rounded-lg bg-[var(--brand-accent)] px-4 py-2 text-sm font-semibold text-white transition-opacity hover:opacity-90"
+          pendingText="Saving..."
         >
           Save Changes
-        </button>
+        </SubmitButton>
       </form>
 
       <div className="rounded-xl border border-red-500/30 bg-red-500/5 p-4">
@@ -81,12 +82,12 @@ export default async function GroupSettingsPage({ params }: Props) {
             await deleteGroup(id)
           }}
         >
-          <button
-            type="submit"
+          <SubmitButton
             className="rounded-lg bg-red-500/20 px-4 py-2 text-sm font-medium text-red-400 transition-colors hover:bg-red-500/30"
+            pendingText="Deleting..."
           >
             Delete Group
-          </button>
+          </SubmitButton>
         </form>
       </div>
     </div>
