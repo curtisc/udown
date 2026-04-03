@@ -8,17 +8,18 @@ export default async function GroupsPage() {
   const session = await auth()
   if (!session?.user) redirect('/sign-in')
 
-  const groups = await prisma.group.findMany({
-    include: {
-      _count: { select: { members: true, events: true } },
-    },
-    orderBy: [{ isDefault: 'desc' }, { name: 'asc' }],
-  })
-
-  const userMemberships = await prisma.groupMember.findMany({
-    where: { userId: session.user.id },
-    select: { groupId: true },
-  })
+  const [groups, userMemberships] = await Promise.all([
+    prisma.group.findMany({
+      include: {
+        _count: { select: { members: true, events: true } },
+      },
+      orderBy: [{ isDefault: 'desc' }, { name: 'asc' }],
+    }),
+    prisma.groupMember.findMany({
+      where: { userId: session.user.id },
+      select: { groupId: true },
+    }),
+  ])
   const memberGroupIds = new Set(userMemberships.map((m) => m.groupId))
 
   return (

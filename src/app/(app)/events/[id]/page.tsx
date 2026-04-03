@@ -16,18 +16,21 @@ export default async function EventDetailPage({ params }: Props) {
   const session = await auth()
   if (!session?.user) redirect('/sign-in')
 
-  const event = await prisma.event.findUnique({
-    where: { id },
-    include: {
-      createdBy: { select: { id: true, name: true, image: true } },
-      rsvps: {
-        include: {
-          user: { select: { id: true, name: true, image: true } },
+  const [event, defaultGroup] = await Promise.all([
+    prisma.event.findUnique({
+      where: { id },
+      include: {
+        createdBy: { select: { id: true, name: true, image: true } },
+        rsvps: {
+          include: {
+            user: { select: { id: true, name: true, image: true } },
+          },
         },
+        tags: { include: { tag: true } },
       },
-      tags: { include: { tag: true } },
-    },
-  })
+    }),
+    prisma.group.findFirst({ where: { isDefault: true } }),
+  ])
 
   if (!event) notFound()
 
@@ -35,7 +38,6 @@ export default async function EventDetailPage({ params }: Props) {
   const isCreator = event.createdById === session.user.id
 
   // Check if user is org admin
-  const defaultGroup = await prisma.group.findFirst({ where: { isDefault: true } })
   let isOrgAdmin = false
   if (defaultGroup) {
     const membership = await prisma.groupMember.findUnique({

@@ -7,16 +7,18 @@ export type OrgSettingsData = {
   accentColor: string
   fromEmail: string | null
   fromName: string | null
+  onboardingComplete: boolean
 }
 
 export async function getOrgSettings(): Promise<OrgSettingsData> {
   const defaults: OrgSettingsData = {
-    orgName: process.env.ORG_NAME || 'uDown',
+    orgName: 'uDown',
     orgLogo: null,
     primaryColor: '#003262',
     accentColor: '#16a0ac',
     fromEmail: process.env.RESEND_FROM_EMAIL || null,
     fromName: null,
+    onboardingComplete: false,
   }
 
   try {
@@ -30,6 +32,7 @@ export async function getOrgSettings(): Promise<OrgSettingsData> {
       accentColor: settings.accentColor || defaults.accentColor,
       fromEmail: settings.fromEmail || defaults.fromEmail,
       fromName: settings.fromName,
+      onboardingComplete: settings.onboardingComplete ?? false,
     }
   } catch {
     // Database not yet migrated — return defaults

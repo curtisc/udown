@@ -12,8 +12,15 @@ export default async function AppLayout({
   const session = await auth()
   if (!session?.user) redirect('/sign-in')
 
-  const org = await getOrgSettings()
-  const admin = await isOrgAdmin(session.user.id)
+  const [org, admin] = await Promise.all([
+    getOrgSettings(),
+    isOrgAdmin(session.user.id),
+  ])
+
+  // If onboarding hasn't been completed, redirect to onboarding wizard
+  if (!org.onboardingComplete) {
+    redirect('/onboarding')
+  }
 
   return (
     <div className="min-h-screen bg-[var(--bg-primary)]">

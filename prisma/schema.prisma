@@ -323,6 +323,7 @@ model OrgSettings {
   fromName                  String?
   defaultEmailNotifications Boolean  @default(true)
   defaultSmsNotifications   Boolean  @default(false)
+  onboardingComplete        Boolean  @default(false)
   updatedAt                 DateTime @updatedAt
 }
 

@@ -15,6 +15,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     async signIn({ user }) {
       if (!user.email) return false
 
+      // Bootstrap: first user ever can sign in without whitelist and becomes org admin
+      const userCount = await prisma.user.count()
+      if (userCount === 0) return true
+
       const whitelisted = await isWhitelisted(user.email)
 
       if (!whitelisted) {
@@ -57,7 +61,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (!defaultGroup) {
         defaultGroup = await prisma.group.create({
           data: {
-            name: process.env.ORG_NAME || 'My Community',
+            name: 'My Community',
             isDefault: true,
             ownerId: user.id!,
           },

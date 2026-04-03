@@ -6,6 +6,7 @@ import { revalidatePath } from 'next/cache'
 import { isOrgAdmin } from '@/lib/permissions'
 import { logActivity } from '@/lib/activity-log'
 import { put } from '@vercel/blob'
+import { sendInviteEmail } from '@/lib/notifications/invite-email'
 
 async function requireOrgAdmin() {
   const session = await auth()
@@ -34,6 +35,13 @@ export async function addWhitelistEntry(formData: FormData) {
       create: { email, type, addedById: session.user.id },
       update: {},
     })
+  }
+
+  // Send invite emails for individual email entries
+  for (const entry of entries) {
+    if (entry.includes('@')) {
+      void sendInviteEmail(entry).catch(console.error)
+    }
   }
 
   logActivity({

@@ -16,21 +16,23 @@ export default async function GroupDetailPage({ params }: Props) {
   const session = await auth()
   if (!session?.user) redirect('/sign-in')
 
-  const group = await prisma.group.findUnique({
-    where: { id },
-    include: {
-      members: {
-        include: {
-          user: { select: { id: true, name: true, email: true, image: true } },
+  const [group, adminStatus] = await Promise.all([
+    prisma.group.findUnique({
+      where: { id },
+      include: {
+        members: {
+          include: {
+            user: { select: { id: true, name: true, email: true, image: true } },
+          },
         },
       },
-    },
-  })
+    }),
+    isGroupAdmin(session.user.id, id),
+  ])
   if (!group) notFound()
 
   const membership = group.members.find((m) => m.userId === session.user.id)
   const isMember = !!membership
-  const adminStatus = await isGroupAdmin(session.user.id, id)
 
   const now = new Date()
   const events = isMember

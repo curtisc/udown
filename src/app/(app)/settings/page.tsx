@@ -7,27 +7,27 @@ export default async function SettingsPage() {
   const session = await auth()
   if (!session?.user) redirect('/sign-in')
 
-  const user = await prisma.user.findUnique({
-    where: { id: session.user.id },
-    select: {
-      name: true,
-      email: true,
-      image: true,
-      emailNotifications: true,
-    },
-  })
+  const [user, groups, prefs] = await Promise.all([
+    prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: {
+        name: true,
+        email: true,
+        image: true,
+        emailNotifications: true,
+      },
+    }),
+    prisma.groupMember.findMany({
+      where: { userId: session.user.id },
+      include: {
+        group: { select: { id: true, name: true } },
+      },
+    }),
+    prisma.notificationPreference.findMany({
+      where: { userId: session.user.id },
+    }),
+  ])
   if (!user) redirect('/sign-in')
-
-  const groups = await prisma.groupMember.findMany({
-    where: { userId: session.user.id },
-    include: {
-      group: { select: { id: true, name: true } },
-    },
-  })
-
-  const prefs = await prisma.notificationPreference.findMany({
-    where: { userId: session.user.id },
-  })
 
   const groupPrefs = groups.map((g) => {
     const pref = prefs.find((p) => p.groupId === g.group.id)
