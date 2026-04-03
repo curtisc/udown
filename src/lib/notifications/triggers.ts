@@ -14,9 +14,9 @@ import {
   getRsvpdUsersWithPrefs,
 } from './preferences'
 
-function getEventUrl(eventId: string): string {
+function getEventUrl(eventSlug: string): string {
   const base = process.env.AUTH_URL || process.env.NEXTAUTH_URL || 'http://localhost:3000'
-  return `${base}/events/${eventId}`
+  return `${base}/events/${eventSlug}`
 }
 
 export async function notifyNewEvent(eventId: string): Promise<void> {
@@ -39,7 +39,7 @@ export async function notifyNewEvent(eventId: string): Promise<void> {
     dateTime: event.dateTime,
     placeName: event.placeName,
     estimatedCost: event.estimatedCost ? Number(event.estimatedCost) : null,
-    eventUrl: getEventUrl(eventId),
+    eventUrl: getEventUrl(event.slug),
     creatorName: event.createdBy.name || 'Someone',
   })
 
@@ -75,7 +75,7 @@ export async function notifyEventUpdate(
   const { subject, content } = eventUpdateEmailContent({
     title: event.title,
     changes,
-    eventUrl: getEventUrl(eventId),
+    eventUrl: getEventUrl(event.slug),
   })
 
   const html = baseEmailHtml({ ...org, preheader: subject, content })
@@ -111,7 +111,7 @@ export async function notifyRsvpMilestone(eventId: string): Promise<void> {
   const { subject, content } = rsvpMilestoneEmailContent({
     title: event.title,
     count: hitMilestone,
-    eventUrl: getEventUrl(eventId),
+    eventUrl: getEventUrl(event.slug),
   })
 
   const html = baseEmailHtml({ ...org, preheader: subject, content })
@@ -150,7 +150,7 @@ export async function sendEventReminders(): Promise<number> {
         title: event.title,
         dateTime: event.dateTime,
         placeName: event.placeName,
-        eventUrl: getEventUrl(event.id),
+        eventUrl: getEventUrl(event.slug),
       })
       const html = baseEmailHtml({ ...org, preheader: subject, content })
 

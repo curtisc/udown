@@ -5,6 +5,7 @@ import { AttendeeList } from './attendee-list'
 type EventCardProps = {
   event: {
     id: string
+    slug: string
     title: string
     dateTime: Date
     endTime: Date | null
@@ -27,7 +28,7 @@ export function EventCard({ event, currentUserId }: EventCardProps) {
 
   return (
     <Link
-      href={`/events/${event.id}`}
+      href={`/events/${event.slug}`}
       className="block rounded-xl bg-[var(--bg-card)] p-4 transition-colors hover:bg-[var(--bg-surface)]"
     >
       <div className="flex items-start justify-between">

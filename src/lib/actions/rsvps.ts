@@ -52,7 +52,7 @@ export async function setRsvp(
     void notifyRsvpMilestone(eventId).catch(console.error)
   }
 
-  revalidatePath(`/events/${eventId}`)
+  revalidatePath('/events', 'layout')
   revalidatePath('/feed')
 }
 
@@ -64,7 +64,7 @@ export async function removeRsvp(eventId: string) {
     where: { userId: session.user.id, eventId },
   })
 
-  revalidatePath(`/events/${eventId}`)
+  revalidatePath('/events', 'layout')
   revalidatePath('/feed')
 }
 
@@ -82,6 +82,6 @@ export async function updateGuestCount(eventId: string, guestCount: number) {
     data: { guestCount },
   })
 
-  revalidatePath(`/events/${eventId}`)
+  revalidatePath('/events', 'layout')
   revalidatePath('/feed')
 }

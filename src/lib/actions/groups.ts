@@ -6,6 +6,7 @@ import { redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
 import { isGroupAdmin } from '@/lib/permissions'
 import { logActivity } from '@/lib/activity-log'
+import { generateUniqueGroupSlug } from '@/lib/slugify'
 
 export async function createGroup(formData: FormData) {
   const session = await auth()
@@ -14,9 +15,12 @@ export async function createGroup(formData: FormData) {
   const name = formData.get('name') as string
   if (!name?.trim()) throw new Error('Name is required')
 
+  const slug = await generateUniqueGroupSlug(name.trim())
+
   const group = await prisma.group.create({
     data: {
       name: name.trim(),
+      slug,
       description: (formData.get('description') as string)?.trim() || null,
       ownerId: session.user.id,
     },
@@ -33,7 +37,7 @@ export async function createGroup(formData: FormData) {
   logActivity({ actorId: session.user.id, action: 'GROUP_CREATED', targetType: 'GROUP', targetId: group.id, metadata: { groupName: group.name } })
 
   revalidatePath('/groups')
-  redirect(`/groups/${group.id}`)
+  redirect(`/groups/${group.slug}`)
 }
 
 export async function updateGroup(groupId: string, formData: FormData) {
@@ -50,7 +54,7 @@ export async function updateGroup(groupId: string, formData: FormData) {
   const name = formData.get('name') as string
   if (!name?.trim()) throw new Error('Name is required')
 
-  await prisma.group.update({
+  const updatedGroup = await prisma.group.update({
     where: { id: groupId },
     data: {
       name: name.trim(),
@@ -58,9 +62,8 @@ export async function updateGroup(groupId: string, formData: FormData) {
     },
   })
 
-  revalidatePath(`/groups/${groupId}`)
-  revalidatePath('/groups')
-  redirect(`/groups/${groupId}/settings`)
+  revalidatePath('/groups', 'layout')
+  redirect(`/groups/${updatedGroup.slug}/settings`)
 }
 
 export async function deleteGroup(groupId: string) {
@@ -101,8 +104,7 @@ export async function joinGroup(groupId: string) {
 
   logActivity({ actorId: session.user.id, action: 'GROUP_JOINED', targetType: 'GROUP', targetId: groupId, metadata: { groupName: group?.name } })
 
-  revalidatePath(`/groups/${groupId}`)
-  revalidatePath('/groups')
+  revalidatePath('/groups', 'layout')
   revalidatePath('/feed')
 }
 
@@ -126,8 +128,7 @@ export async function leaveGroup(groupId: string) {
     where: { userId: session.user.id, groupId },
   })
 
-  revalidatePath(`/groups/${groupId}`)
-  revalidatePath('/groups')
+  revalidatePath('/groups', 'layout')
   revalidatePath('/feed')
   redirect('/groups')
 }
@@ -155,7 +156,7 @@ export async function removeMember(groupId: string, targetUserId: string) {
     where: { userId: targetUserId, groupId },
   })
 
-  revalidatePath(`/groups/${groupId}`)
+  revalidatePath('/groups', 'layout')
 }
 
 export async function promoteMember(groupId: string, targetUserId: string) {
@@ -170,7 +171,7 @@ export async function promoteMember(groupId: string, targetUserId: string) {
     data: { role: 'ADMIN' },
   })
 
-  revalidatePath(`/groups/${groupId}`)
+  revalidatePath('/groups', 'layout')
 }
 
 export async function demoteMember(groupId: string, targetUserId: string) {
@@ -188,7 +189,7 @@ export async function demoteMember(groupId: string, targetUserId: string) {
     data: { role: 'MEMBER' },
   })
 
-  revalidatePath(`/groups/${groupId}`)
+  revalidatePath('/groups', 'layout')
 }
 
 export async function transferOwnership(groupId: string, newOwnerId: string) {
@@ -210,5 +211,5 @@ export async function transferOwnership(groupId: string, newOwnerId: string) {
     data: { ownerId: newOwnerId },
   })
 
-  revalidatePath(`/groups/${groupId}`)
+  revalidatePath('/groups', 'layout')
 }

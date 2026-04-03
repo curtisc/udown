@@ -7,20 +7,20 @@ import { isGroupAdmin } from '@/lib/permissions'
 import { SubmitButton } from '@/components/ui/submit-button'
 
 type Props = {
-  params: Promise<{ id: string }>
+  params: Promise<{ slug: string }>
 }
 
 export default async function GroupSettingsPage({ params }: Props) {
-  const { id } = await params
+  const { slug } = await params
   const session = await auth()
   if (!session?.user) redirect('/sign-in')
 
-  const group = await prisma.group.findUnique({ where: { id } })
+  const group = await prisma.group.findUnique({ where: { slug } })
   if (!group) notFound()
-  if (group.isDefault) redirect(`/groups/${id}`)
+  if (group.isDefault) redirect(`/groups/${slug}`)
 
-  const adminStatus = await isGroupAdmin(session.user.id, id)
-  if (!adminStatus) redirect(`/groups/${id}`)
+  const adminStatus = await isGroupAdmin(session.user.id, group.id)
+  if (!adminStatus) redirect(`/groups/${slug}`)
 
   const boundUpdateGroup = updateGroup.bind(null, group.id)
 
@@ -29,7 +29,7 @@ export default async function GroupSettingsPage({ params }: Props) {
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-bold text-[var(--text-primary)]">Group Settings</h2>
         <Link
-          href={`/groups/${id}`}
+          href={`/groups/${slug}`}
           className="text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
         >
           Back to group
@@ -79,7 +79,7 @@ export default async function GroupSettingsPage({ params }: Props) {
         <form
           action={async () => {
             'use server'
-            await deleteGroup(id)
+            await deleteGroup(group.id)
           }}
         >
           <SubmitButton

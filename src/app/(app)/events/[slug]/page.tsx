@@ -9,17 +9,17 @@ import { DeleteEventButton } from '@/components/events/delete-event-button'
 import { generateGoogleCalendarUrl } from '@/lib/calendar-url'
 
 type Props = {
-  params: Promise<{ id: string }>
+  params: Promise<{ slug: string }>
 }
 
 export default async function EventDetailPage({ params }: Props) {
-  const { id } = await params
+  const { slug } = await params
   const session = await auth()
   if (!session?.user) redirect('/sign-in')
 
   const [event, defaultGroup] = await Promise.all([
     prisma.event.findUnique({
-      where: { id },
+      where: { slug },
       include: {
         createdBy: { select: { id: true, name: true, image: true } },
         rsvps: {
@@ -149,7 +149,7 @@ export default async function EventDetailPage({ params }: Props) {
       {canEdit && (
         <div className="flex gap-3 border-t border-[var(--bg-surface)] pt-4">
           <Link
-            href={`/events/${event.id}/edit`}
+            href={`/events/${event.slug}/edit`}
             className="rounded-lg bg-[var(--bg-surface)] px-4 py-2 text-sm font-medium text-[var(--text-primary)] transition-colors hover:bg-[var(--bg-card)]"
           >
             Edit

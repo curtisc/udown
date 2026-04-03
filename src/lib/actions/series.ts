@@ -7,6 +7,7 @@ import { redirect } from 'next/navigation'
 import { generateEventDates, getWeekOfMonth } from '@/lib/series-utils'
 import { logActivity } from '@/lib/activity-log'
 import { isGroupAdmin } from '@/lib/permissions'
+import { generateUniqueEventSlug } from '@/lib/slugify'
 
 export async function createEventSeries(formData: FormData) {
   const session = await auth()
@@ -120,9 +121,12 @@ export async function generateSeriesInstances(
       ? new Date(date.getTime() + series.durationMinutes * 60000)
       : null
 
+    const slug = await generateUniqueEventSlug(`${series.title} ${date.toISOString().slice(0, 10)}`)
+
     const newEvent = await prisma.event.create({
       data: {
         title: series.title,
+        slug,
         description: series.description,
         dateTime: date,
         endTime,
@@ -228,9 +232,11 @@ export async function editSeriesEvent(
     })
   }
 
+  const eventForRedirect = await prisma.event.findUnique({ where: { id: eventId }, select: { slug: true } })
+
   revalidatePath('/feed')
-  revalidatePath(`/events/${eventId}`)
-  redirect(`/events/${eventId}`)
+  revalidatePath('/events', 'layout')
+  redirect(`/events/${eventForRedirect?.slug || eventId}`)
 }
 
 export async function deleteSeriesEvent(

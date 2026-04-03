@@ -7,6 +7,7 @@ import { redirect } from 'next/navigation'
 import { isOrgAdmin } from '@/lib/permissions'
 import { put } from '@vercel/blob'
 import { sendInviteEmail } from '@/lib/notifications/invite-email'
+import { generateUniqueGroupSlug } from '@/lib/slugify'
 
 async function requireOnboardingAdmin() {
   const session = await auth()
@@ -52,9 +53,10 @@ export async function saveOrgSettings(formData: FormData) {
   // Rename the default group to match org name
   const defaultGroup = await prisma.group.findFirst({ where: { isDefault: true } })
   if (defaultGroup) {
+    const slug = await generateUniqueGroupSlug(orgName)
     await prisma.group.update({
       where: { id: defaultGroup.id },
-      data: { name: orgName },
+      data: { name: orgName, slug },
     })
   }
 
@@ -132,9 +134,12 @@ export async function createOnboardingGroup(formData: FormData) {
   const description = (formData.get('description') as string)?.trim()
   if (!description) throw new Error('Group description is required')
 
+  const slug = await generateUniqueGroupSlug(name)
+
   const group = await prisma.group.create({
     data: {
       name,
+      slug,
       description,
       ownerId: session.user.id,
     },

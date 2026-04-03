@@ -9,28 +9,27 @@ import { isGroupAdmin } from '@/lib/permissions'
 import { SubmitButton } from '@/components/ui/submit-button'
 
 type Props = {
-  params: Promise<{ id: string }>
+  params: Promise<{ slug: string }>
 }
 
 export default async function GroupDetailPage({ params }: Props) {
-  const { id } = await params
+  const { slug } = await params
   const session = await auth()
   if (!session?.user) redirect('/sign-in')
 
-  const [group, adminStatus] = await Promise.all([
-    prisma.group.findUnique({
-      where: { id },
-      include: {
-        members: {
-          include: {
-            user: { select: { id: true, name: true, email: true, image: true } },
-          },
+  const group = await prisma.group.findUnique({
+    where: { slug },
+    include: {
+      members: {
+        include: {
+          user: { select: { id: true, name: true, email: true, image: true } },
         },
       },
-    }),
-    isGroupAdmin(session.user.id, id),
-  ])
+    },
+  })
   if (!group) notFound()
+
+  const adminStatus = await isGroupAdmin(session.user.id, group.id)
 
   const membership = group.members.find((m) => m.userId === session.user.id)
   const isMember = !!membership
@@ -38,7 +37,7 @@ export default async function GroupDetailPage({ params }: Props) {
   const now = new Date()
   const events = isMember
     ? await prisma.event.findMany({
-        where: { groupId: id, dateTime: { gte: now } },
+        where: { groupId: group.id, dateTime: { gte: now } },
         include: {
           rsvps: {
             include: { user: { select: { id: true, name: true, image: true } } },
@@ -79,7 +78,7 @@ export default async function GroupDetailPage({ params }: Props) {
 
         <div className="flex gap-2">
           {!isMember && (
-            <form action={async () => { 'use server'; await joinGroup(id) }}>
+            <form action={async () => { 'use server'; await joinGroup(group.id) }}>
               <SubmitButton
                 className="rounded-lg bg-[var(--brand-accent)] px-4 py-2 text-sm font-semibold text-white transition-opacity hover:opacity-90"
                 pendingText="Joining..."
@@ -89,7 +88,7 @@ export default async function GroupDetailPage({ params }: Props) {
             </form>
           )}
           {isMember && !group.isDefault && group.ownerId !== session.user.id && (
-            <form action={async () => { 'use server'; await leaveGroup(id) }}>
+            <form action={async () => { 'use server'; await leaveGroup(group.id) }}>
               <SubmitButton
                 className="rounded-lg bg-[var(--bg-surface)] px-4 py-2 text-sm font-medium text-[var(--text-secondary)] transition-colors hover:text-[var(--text-primary)]"
                 pendingText="Leaving..."
@@ -100,7 +99,7 @@ export default async function GroupDetailPage({ params }: Props) {
           )}
           {adminStatus && !group.isDefault && (
             <Link
-              href={`/groups/${id}/settings`}
+              href={`/groups/${group.slug}/settings`}
               className="rounded-lg bg-[var(--bg-surface)] px-4 py-2 text-sm font-medium text-[var(--text-secondary)] transition-colors hover:text-[var(--text-primary)]"
             >
               Settings
@@ -115,7 +114,7 @@ export default async function GroupDetailPage({ params }: Props) {
           <div className="mb-3 flex items-center justify-between">
             <h3 className="text-sm font-medium text-[var(--text-secondary)]">Upcoming Events</h3>
             <Link
-              href={`/events/new?groupId=${id}`}
+              href={`/events/new?groupId=${group.id}`}
               className="text-sm text-[var(--brand-accent)] hover:underline"
             >
               New Event
@@ -150,7 +149,7 @@ export default async function GroupDetailPage({ params }: Props) {
       <div>
         <h3 className="mb-3 text-sm font-medium text-[var(--text-secondary)]">Members</h3>
         <MemberList
-          groupId={id}
+          groupId={group.id}
           ownerId={group.ownerId}
           members={group.members.map((m) => ({
             userId: m.userId,

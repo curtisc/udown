@@ -23,7 +23,7 @@ export default async function AdminGroupsPage() {
         return (
           <Link
             key={group.id}
-            href={`/groups/${group.id}`}
+            href={`/groups/${group.slug}`}
             className="flex items-center justify-between rounded-lg bg-[var(--bg-card)] px-4 py-3 transition-colors hover:bg-[var(--bg-surface)]"
           >
             <div>

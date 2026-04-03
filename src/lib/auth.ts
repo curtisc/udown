@@ -62,6 +62,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         defaultGroup = await prisma.group.create({
           data: {
             name: 'My Community',
+            slug: 'default',
             isDefault: true,
             ownerId: user.id!,
           },

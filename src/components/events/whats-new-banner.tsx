@@ -6,6 +6,7 @@ import { joinGroup } from '@/lib/actions/groups'
 
 type NewGroup = {
   id: string
+  slug: string
   name: string
   description: string | null
   _count: { members: number }
@@ -13,6 +14,7 @@ type NewGroup = {
 
 type NewEvent = {
   id: string
+  slug: string
   title: string
   dateTime: Date
   placeName: string | null
@@ -70,7 +72,7 @@ export function WhatsNewBanner({ newGroups, newEvents }: Props) {
               >
                 <div className="min-w-0 flex-1">
                   <Link
-                    href={`/groups/${group.id}`}
+                    href={`/groups/${group.slug}`}
                     className="text-sm font-medium text-[var(--text-primary)] hover:underline"
                   >
                     {group.name}
@@ -107,7 +109,7 @@ export function WhatsNewBanner({ newGroups, newEvents }: Props) {
             {newEvents.map((event) => (
               <Link
                 key={event.id}
-                href={`/events/${event.id}`}
+                href={`/events/${event.slug}`}
                 className="flex items-center justify-between rounded-lg bg-[var(--bg-surface)] px-3 py-2 transition-colors hover:bg-[var(--bg-primary)]"
               >
                 <div className="min-w-0">

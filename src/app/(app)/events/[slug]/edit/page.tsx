@@ -7,17 +7,17 @@ import { updateEvent } from '@/lib/actions/events'
 import { getTags } from '@/lib/actions/tags'
 
 type Props = {
-  params: Promise<{ id: string }>
+  params: Promise<{ slug: string }>
 }
 
 export default async function EditEventPage({ params }: Props) {
-  const { id } = await params
+  const { slug } = await params
   const session = await auth()
   if (!session?.user) redirect('/sign-in')
 
   const [event, tags, memberships] = await Promise.all([
     prisma.event.findUnique({
-      where: { id },
+      where: { slug },
       include: { tags: { select: { tagId: true } } },
     }),
     getTags(),
@@ -41,7 +41,7 @@ export default async function EditEventPage({ params }: Props) {
       canEdit = membership?.role === 'ADMIN'
     }
   }
-  if (!canEdit) redirect(`/events/${id}`)
+  if (!canEdit) redirect(`/events/${slug}`)
 
   const boundUpdateEvent = updateEvent.bind(null, event.id)
   const groups = memberships.map((m) => m.group)
@@ -51,7 +51,7 @@ export default async function EditEventPage({ params }: Props) {
       <div className="mb-6 flex items-center justify-between">
         <h2 className="text-xl font-bold text-[var(--text-primary)]">Edit Event</h2>
         <Link
-          href={`/events/${event.id}`}
+          href={`/events/${event.slug}`}
           className="text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
         >
           Cancel

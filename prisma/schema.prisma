@@ -121,6 +121,7 @@ enum AccessRequestStatus {
 
 model Group {
   id                      String    @id @default(cuid())
+  slug                    String    @unique @default("")
   name                    String
   description             String?
   image                   String?
@@ -168,6 +169,7 @@ enum GroupMemberRole {
 
 model Event {
   id             String    @id @default(cuid())
+  slug           String    @unique @default("")
   title          String
   description    String?
   dateTime       DateTime

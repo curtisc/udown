@@ -7,6 +7,7 @@ import { revalidatePath } from 'next/cache'
 import { notifyNewEvent, notifyEventUpdate } from '@/lib/notifications/triggers'
 import { logActivity } from '@/lib/activity-log'
 import { isGroupAdmin } from '@/lib/permissions'
+import { generateUniqueEventSlug } from '@/lib/slugify'
 
 export async function createEvent(formData: FormData) {
   const session = await auth()
@@ -45,9 +46,12 @@ export async function createEvent(formData: FormData) {
   const placeLatStr = formData.get('placeLat') as string
   const placeLngStr = formData.get('placeLng') as string
 
+  const slug = await generateUniqueEventSlug(title.trim())
+
   const event = await prisma.event.create({
     data: {
       title: title.trim(),
+      slug,
       description: (formData.get('description') as string)?.trim() || null,
       dateTime: new Date(dateTimeStr),
       endTime: endTimeStr ? new Date(endTimeStr) : null,
@@ -165,9 +169,11 @@ export async function updateEvent(eventId: string, formData: FormData) {
     void notifyEventUpdate(eventId, changes).catch(console.error)
   }
 
+  const updatedEvent = await prisma.event.findUnique({ where: { id: eventId }, select: { slug: true } })
+
   revalidatePath('/feed')
-  revalidatePath(`/events/${eventId}`)
-  redirect(`/events/${eventId}`)
+  revalidatePath('/events', 'layout')
+  redirect(`/events/${updatedEvent?.slug || eventId}`)
 }
 
 export async function deleteEvent(eventId: string) {

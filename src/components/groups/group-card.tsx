@@ -3,6 +3,7 @@ import Link from 'next/link'
 type GroupCardProps = {
   group: {
     id: string
+    slug: string
     name: string
     description: string | null
     isDefault: boolean
@@ -14,7 +15,7 @@ type GroupCardProps = {
 export function GroupCard({ group, isMember }: GroupCardProps) {
   return (
     <Link
-      href={`/groups/${group.id}`}
+      href={`/groups/${group.slug}`}
       className="block rounded-xl bg-[var(--bg-card)] p-4 transition-colors hover:bg-[var(--bg-surface)]"
     >
       <div className="flex items-start justify-between">
