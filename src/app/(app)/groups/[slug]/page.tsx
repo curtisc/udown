@@ -115,7 +115,7 @@ export default async function GroupDetailPage({ params }: Props) {
             <h3 className="text-sm font-medium text-[var(--text-secondary)]">Upcoming Events</h3>
             <Link
               href={`/events/new?groupId=${group.id}`}
-              className="text-sm text-[var(--brand-accent)] hover:underline"
+              className="rounded-lg bg-[var(--brand-accent)] px-4 py-2 text-sm font-semibold text-white transition-opacity hover:opacity-90"
             >
               New Event
             </Link>
