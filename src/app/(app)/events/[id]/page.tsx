@@ -6,6 +6,7 @@ import { formatEventDate, formatEventTime, formatCost } from '@/lib/format'
 import { RsvpButton } from '@/components/events/rsvp-button'
 import { AttendeeList } from '@/components/events/attendee-list'
 import { DeleteEventButton } from '@/components/events/delete-event-button'
+import { generateGoogleCalendarUrl } from '@/lib/calendar-url'
 
 type Props = {
   params: Promise<{ id: string }>
@@ -115,6 +116,25 @@ export default async function EventDetailPage({ params }: Props) {
           currentGuestCount={userRsvp?.guestCount ?? 0}
         />
       </div>
+
+      <a
+        href={generateGoogleCalendarUrl({
+          title: event.title,
+          description: event.description,
+          dateTime: event.dateTime,
+          endTime: event.endTime,
+          placeName: event.placeName,
+          placeAddress: event.placeAddress,
+        })}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="flex items-center justify-center gap-2 rounded-lg bg-[var(--bg-surface)] px-4 py-2 text-sm font-medium text-[var(--text-primary)] transition-colors hover:bg-[var(--bg-card)]"
+      >
+        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5" />
+        </svg>
+        Add to Google Calendar
+      </a>
 
       <div>
         <h3 className="mb-3 text-sm font-medium text-[var(--text-secondary)]">Who&apos;s coming?</h3>
