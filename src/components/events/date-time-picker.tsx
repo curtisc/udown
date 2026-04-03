@@ -13,15 +13,30 @@ type Props = {
   minTime?: Date | null
 }
 
-export function DateTimePicker({ name, label, required, value, onChange, minDate, minTime }: Props) {
-  // When no time is selected yet, open the time list scrolled to 5 PM
-  // by setting openToDate to today at 5 PM
-  const defaultOpenDate = new Date()
-  defaultOpenDate.setHours(12, 0, 0, 0)
+function roundUpTo15Min(date: Date): Date {
+  const ms = 15 * 60 * 1000
+  return new Date(Math.ceil(date.getTime() / ms) * ms)
+}
 
-  // For the same-day min time restriction
-  const isSameDay = minDate && value &&
-    minDate.toDateString() === value.toDateString()
+export function DateTimePicker({ name, label, required, value, onChange, minDate, minTime }: Props) {
+  const now = new Date()
+  const effectiveMinDate = minDate || now
+
+  // Determine if selected date is today (or the same day as minDate)
+  const isMinDay = value &&
+    value.toDateString() === effectiveMinDate.toDateString()
+
+  // On the min day, don't allow times before now (or the provided minTime)
+  const effectiveMinTime = isMinDay
+    ? (minTime && minTime > now ? minTime : roundUpTo15Min(now))
+    : undefined
+  const effectiveMaxTime = isMinDay
+    ? new Date(new Date().setHours(23, 59, 0, 0))
+    : undefined
+
+  // Default open: today at the next 15-min mark, or noon if that's past
+  const defaultOpen = roundUpTo15Min(now)
+  if (defaultOpen.getHours() < 12) defaultOpen.setHours(12, 0, 0, 0)
 
   return (
     <div>
@@ -36,10 +51,10 @@ export function DateTimePicker({ name, label, required, value, onChange, minDate
         dateFormat="MMM d, yyyy h:mm aa"
         placeholderText="Pick a date and time"
         required={required}
-        minDate={minDate || undefined}
-        minTime={isSameDay && minTime ? minTime : undefined}
-        maxTime={isSameDay && minTime ? new Date(new Date().setHours(23, 59, 0, 0)) : undefined}
-        openToDate={value || defaultOpenDate}
+        minDate={effectiveMinDate}
+        minTime={effectiveMinTime}
+        maxTime={effectiveMaxTime}
+        openToDate={value || defaultOpen}
         className="mt-1 w-full rounded-lg border border-[var(--bg-surface)] bg-[var(--bg-card)] px-3 py-2 text-[var(--text-primary)] placeholder-[var(--text-secondary)] focus:border-[var(--brand-accent)] focus:outline-none focus:ring-1 focus:ring-[var(--brand-accent)]"
         calendarClassName="udown-datepicker"
         wrapperClassName="w-full"
