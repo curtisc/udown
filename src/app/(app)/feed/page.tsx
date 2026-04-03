@@ -49,6 +49,7 @@ export default async function FeedPage({ searchParams }: Props) {
           where: {
             createdAt: { gt: lastVisited },
             isDefault: false,
+            ownerId: { not: session.user.id },
             members: { none: { userId: session.user.id } },
           },
           include: { _count: { select: { members: true } } },
@@ -61,6 +62,7 @@ export default async function FeedPage({ searchParams }: Props) {
       ? prisma.event.findMany({
           where: {
             createdAt: { gt: lastVisited },
+            createdById: { not: session.user.id },
             dateTime: { gte: now },
             group: {
               members: { some: { userId: session.user.id } },
