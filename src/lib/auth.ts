@@ -19,6 +19,12 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       const userCount = await prisma.user.count()
       if (userCount === 0) return true
 
+      // Existing users can always sign in — whitelist only gates new sign-ups
+      const existingUser = await prisma.user.findUnique({
+        where: { email: user.email },
+      })
+      if (existingUser) return true
+
       const whitelisted = await isWhitelisted(user.email)
 
       if (!whitelisted) {
